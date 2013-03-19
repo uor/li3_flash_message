@@ -64,7 +64,7 @@ class FlashMessage extends \lithium\template\Helper {
 		try {
 			return $view->render($type, $data, $options['options']);
 		} catch (TemplateException $e) {
-			return = $view->render($type, $data, array('library' => 'li3_flash_message'));
+			return $view->render($type, $data, array('library' => 'li3_flash_message'));
 		}
 	}
 }

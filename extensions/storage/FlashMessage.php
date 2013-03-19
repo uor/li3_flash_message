@@ -133,7 +133,8 @@ class FlashMessage extends \lithium\core\StaticObject {
 	 */
 	public static function read($key = 'default') {
 		$session = static::$_classes['session'];
-		return $session::read("FlashMessage.{$key}", array('name' => 'default'));
+		$base = static::$_config['session']['key'];
+		return $session::read("{$base}.{$key}", array('name' => 'default'));
 	}
 
 	/**
