@@ -27,34 +27,34 @@ class FlashMessageTest extends \lithium\test\Unit {
 	
 	public function testWrite() {
 		FlashMessage::write('Foo');
-		$expected = array('message' => 'Foo', 'atts' => array());
-		$result = Session::read('FlashMessage.default', array('name' => 'default'));
+		$expected = array('message' => 'Foo', 'attrs' => array());
+		$result = Session::read('message.default', array('name' => 'default'));
 		$this->assertEqual($expected, $result);
 		
 		FlashMessage::write('Foo 2', array('type' => 'notice'));
-		$expected = array('message' => 'Foo 2', 'atts' => array('type' => 'notice'));
-		$result = Session::read('FlashMessage.default', array('name' => 'default'));
+		$expected = array('message' => 'Foo 2', 'attrs' => array('type' => 'notice'));
+		$result = Session::read('message.default', array('name' => 'default'));
 		$this->assertEqual($expected, $result);
 		
 		FlashMessage::write('Foo 3', array(), 'TestKey');
-		$expected = array('message' => 'Foo 3', 'atts' => array());
-		$result = Session::read('FlashMessage.TestKey', array('name' => 'default'));
+		$expected = array('message' => 'Foo 3', 'attrs' => array());
+		$result = Session::read('message.TestKey', array('name' => 'default'));
 		$this->assertEqual($expected, $result);
 	}
 	
 	public function testRead() {
 		FlashMessage::write('Foo');
-		$expected = array('message' => 'Foo', 'atts' => array());
+		$expected = array('message' => 'Foo', 'attrs' => array());
 		$result = FlashMessage::read();
 		$this->assertEqual($expected, $result);
 		
 		FlashMessage::write('Foo 2', array('type' => 'notice'));
-		$expected = array('message' => 'Foo 2', 'atts' => array('type' => 'notice'));
+		$expected = array('message' => 'Foo 2', 'attrs' => array('type' => 'notice'));
 		$result = FlashMessage::read();
 		$this->assertEqual($expected, $result);
 		
 		FlashMessage::write('Foo 3', array(), 'TestKey');
-		$expected = array('message' => 'Foo 3', 'atts' => array());
+		$expected = array('message' => 'Foo 3', 'attrs' => array());
 		$result = FlashMessage::read('TestKey');
 		$this->assertEqual($expected, $result);
 	}
@@ -62,18 +62,18 @@ class FlashMessageTest extends \lithium\test\Unit {
 	public function testClear() {
 		FlashMessage::write('Foo');
 		FlashMessage::clear();
-		$result = Session::read('FlashMessage.default', array('name' => 'default'));
+		$result = Session::read('message.default', array('name' => 'default'));
 		$this->assertNull($result);
 		
 		FlashMessage::write('Foo 2', array(), 'TestKey');
 		FlashMessage::clear('TestKey');
-		$result = Session::read('FlashMessage.TestKey', array('name' => 'default'));
+		$result = Session::read('message.TestKey', array('name' => 'default'));
 		$this->assertNull($result);
 		
 		FlashMessage::write('Foo 3', array(), 'TestKey2');
 		FlashMessage::write('Foo 4', array(), 'TestKey3');
-		FlashMessage::clear(null);
-		$result = Session::read('FlashMessage', array('name' => 'default'));
+		FlashMessage::clear();
+		$result = Session::read('message', array('name' => 'default'));
 		$this->assertNull($result);
 	}
 
