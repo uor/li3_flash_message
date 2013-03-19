@@ -142,11 +142,11 @@ class FlashMessage extends \lithium\core\StaticObject {
 	 *
 	 * @return void
 	 */
-	public static function clear() {
+	public static function clear($key = 'default') {
 		$session = static::$_classes['session'];
-		$key = static::$_config['session']['key'];
+		$base = static::$_config['session']['key'];
 		$name = static::$_config['session']['config'];
-		return $session::delete($key, compact('name'));
+		return $session::delete("{$base}.{$key}", compact('name'));
 	}
 }
 
