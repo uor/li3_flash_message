@@ -114,14 +114,14 @@ class FlashMessage extends \lithium\core\StaticObject {
 	public static function write($message, array $attrs = array(), $key = 'default') {
 		$session = static::$_classes['session'];
 		$base = static::$_config['session']['key'];
-		$key = "{$base}.{$key}";
+		$key = ($base ? "{$base}." : '') . $key;
 		$name = static::$_config['session']['config'];
 
 		if (static::$_messages === null) {
 			$path = Libraries::get(true, 'path') . '/config/messages.php';
 			static::$_messages = file_exists($path) ? include $path : array();
 		}
-		$message = isset(static::$_messages[$message]) ? static::$_messages[$message] : $message;
+ 		$message = isset(static::$_messages[$message]) ? static::$_messages[$message] : $message;
 		return $session::write($key, compact('message', 'attrs'), compact('name'));
 	}
 
@@ -133,8 +133,11 @@ class FlashMessage extends \lithium\core\StaticObject {
 	 */
 	public static function read($key = 'default') {
 		$session = static::$_classes['session'];
-		$base = static::$_config['session']['key'];
-		return $session::read("{$base}.{$key}", array('name' => 'default'));
+		$config = static::$_config['session'];
+		$name = $config['config'];
+		$base = $config['key'];
+		$key = ($base ? "{$base}." : '') . $key;
+		return $session::read("{$key}", compact('name'));
 	}
 
 	/**
@@ -142,11 +145,16 @@ class FlashMessage extends \lithium\core\StaticObject {
 	 *
 	 * @return void
 	 */
-	public static function clear($key = 'default') {
+	public static function clear($key = null) {
 		$session = static::$_classes['session'];
-		$base = static::$_config['session']['key'];
-		$name = static::$_config['session']['config'];
-		return $session::delete("{$base}.{$key}", compact('name'));
+		$config = static::$_config['session'];
+		$base = $config['key'];
+		$key = ($base && $key ? "{$base}." : '') . $key;
+
+		return (
+			$config['key'] ? $session::delete("{$config['key']}", compact('name')) : true &&
+			$session::delete($key, compact('name'))
+		);
 	}
 }
 
