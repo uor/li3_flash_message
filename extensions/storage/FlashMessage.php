@@ -137,7 +137,7 @@ class FlashMessage extends \lithium\core\StaticObject {
 		$name = $config['config'];
 		$base = $config['key'];
 		$key = ($base ? "{$base}." : '') . $key;
-		return $session::read("{$key}", compact('name'));
+		return $session::read($key, compact('name'));
 	}
 
 	/**
