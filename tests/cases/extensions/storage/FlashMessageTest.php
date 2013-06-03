@@ -8,8 +8,8 @@
 
 namespace li3_flash_message\tests\cases\extensions\storage;
 
-use \li3_flash_message\extensions\storage\FlashMessage;
-use \lithium\storage\Session;
+use li3_flash_message\extensions\storage\FlashMessage;
+use lithium\storage\Session;
 
 class FlashMessageTest extends \lithium\test\Unit {
 
@@ -20,63 +20,146 @@ class FlashMessageTest extends \lithium\test\Unit {
 			)
 		));
 	}
-	
+
 	public function tearDown() {
 		Session::delete('default');
+		FlashMessage::reset();
 	}
-	
+
+	public function testConfig() {
+		$result = FlashMessage::config();
+		$expected = array(
+			'session' => array('config' => 'default', 'base' => null),
+			'classes' => array('session' => 'lithium\storage\Session')
+		);
+		$this->assertEqual($expected, $result);
+
+		FlashMessage::config(array('session' => array('base' => 'message')));
+		$result = FlashMessage::config();
+		$expected = array(
+			'session' => array('config' => 'default', 'base' => 'message'),
+			'classes' => array('session' => 'lithium\storage\Session')
+		);
+		$this->assertEqual($expected, $result);
+	}
+
+	public function testReset() {
+		FlashMessage::config(array('session' => array('base' => 'message')));
+		FlashMessage::reset();
+		$result = FlashMessage::config();
+		$expected = array(
+			'session' => array('config' => 'default', 'base' => null),
+			'classes' => array('session' => 'lithium\storage\Session')
+		);
+		$this->assertEqual($expected, $result);
+	}
+
 	public function testWrite() {
 		FlashMessage::write('Foo');
 		$expected = array('message' => 'Foo', 'attrs' => array());
-		$result = Session::read('message.default', array('name' => 'default'));
+		$result = Session::read('flash_message');
 		$this->assertEqual($expected, $result);
-		
+
 		FlashMessage::write('Foo 2', array('type' => 'notice'));
 		$expected = array('message' => 'Foo 2', 'attrs' => array('type' => 'notice'));
-		$result = Session::read('message.default', array('name' => 'default'));
+		$result = Session::read('flash_message');
 		$this->assertEqual($expected, $result);
-		
+
 		FlashMessage::write('Foo 3', array(), 'TestKey');
 		$expected = array('message' => 'Foo 3', 'attrs' => array());
-		$result = Session::read('message.TestKey', array('name' => 'default'));
+		$result = Session::read('TestKey');
 		$this->assertEqual($expected, $result);
 	}
-	
+
 	public function testRead() {
 		FlashMessage::write('Foo');
 		$expected = array('message' => 'Foo', 'attrs' => array());
 		$result = FlashMessage::read();
 		$this->assertEqual($expected, $result);
-		
+
 		FlashMessage::write('Foo 2', array('type' => 'notice'));
 		$expected = array('message' => 'Foo 2', 'attrs' => array('type' => 'notice'));
 		$result = FlashMessage::read();
 		$this->assertEqual($expected, $result);
-		
+
 		FlashMessage::write('Foo 3', array(), 'TestKey');
 		$expected = array('message' => 'Foo 3', 'attrs' => array());
 		$result = FlashMessage::read('TestKey');
 		$this->assertEqual($expected, $result);
 	}
-	
+
 	public function testClear() {
 		FlashMessage::write('Foo');
 		FlashMessage::clear();
-		$result = Session::read('message.default', array('name' => 'default'));
+		$result = FlashMessage::read();
 		$this->assertNull($result);
-		
+
 		FlashMessage::write('Foo 2', array(), 'TestKey');
 		FlashMessage::clear('TestKey');
-		$result = Session::read('message.TestKey', array('name' => 'default'));
+		$result = FlashMessage::read('TestKey');
 		$this->assertNull($result);
-		
+
 		FlashMessage::write('Foo 3', array(), 'TestKey2');
 		FlashMessage::write('Foo 4', array(), 'TestKey3');
 		FlashMessage::clear();
-		$result = Session::read('message', array('name' => 'default'));
+		$result = FlashMessage::read();
 		$this->assertNull($result);
 	}
 
+	public function testWriteWithBase() {
+		FlashMessage::config(array('session' => array('base' => 'message')));
+		FlashMessage::write('Foo');
+		$expected = array('message' => 'Foo', 'attrs' => array());
+		$result = Session::read('message.flash_message');
+		$this->assertEqual($expected, $result);
+
+		FlashMessage::write('Foo 2', array('type' => 'notice'));
+		$expected = array('message' => 'Foo 2', 'attrs' => array('type' => 'notice'));
+		$result = Session::read('message.flash_message');
+		$this->assertEqual($expected, $result);
+
+		FlashMessage::write('Foo 3', array(), 'TestKey');
+		$expected = array('message' => 'Foo 3', 'attrs' => array());
+		$result = Session::read('message.TestKey');
+		$this->assertEqual($expected, $result);
+	}
+
+	public function testReadWithBase() {
+		FlashMessage::config(array('session' => array('base' => 'message')));
+		FlashMessage::write('Foo');
+		$expected = array('message' => 'Foo', 'attrs' => array());
+		$result = FlashMessage::read();
+		$this->assertEqual($expected, $result);
+
+		FlashMessage::write('Foo 2', array('type' => 'notice'));
+		$expected = array('message' => 'Foo 2', 'attrs' => array('type' => 'notice'));
+		$result = FlashMessage::read();
+		$this->assertEqual($expected, $result);
+
+		FlashMessage::write('Foo 3', array(), 'TestKey');
+		$expected = array('message' => 'Foo 3', 'attrs' => array());
+		$result = FlashMessage::read('TestKey');
+		$this->assertEqual($expected, $result);
+	}
+
+	public function testClearWithBase() {
+		FlashMessage::config(array('session' => array('base' => 'message')));
+		FlashMessage::write('Foo');
+		FlashMessage::clear();
+		$result = FlashMessage::read('flash_message');
+		$this->assertNull($result);
+
+		FlashMessage::write('Foo 2', array(), 'TestKey');
+		FlashMessage::clear('TestKey');
+		$result = FlashMessage::read('TestKey');
+		$this->assertNull($result);
+
+		FlashMessage::write('Foo 3', array(), 'TestKey2');
+		FlashMessage::write('Foo 4', array(), 'TestKey3');
+		FlashMessage::clear();
+		$result = FlashMessage::read();
+		$this->assertNull($result);
+	}
 }
 
 ?>
