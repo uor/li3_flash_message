@@ -28,13 +28,13 @@ class FlashMessage extends \lithium\template\Helper {
 
 	/**
 	 * Outputs a flash message using a template. The message will be cleared afterwards.
-	 * With defaults settings it looks for the template 
-	 * `app/views/elements/flash_message.html.php`. If it doesn't exist, the  plugin's view 
-	 * at `li3_flash_message/views/elements/flash_message.html.php` will be used. Use this 
-	 * file as a starting point for your own flash message element. In order to use a 
+	 * With defaults settings it looks for the template
+	 * `app/views/elements/flash_message.html.php`. If it doesn't exist, the  plugin's view
+	 * at `li3_flash_message/views/elements/flash_message.html.php` will be used. Use this
+	 * file as a starting point for your own flash message element. In order to use a
 	 * different template, adjust `$options['type']` and `$options['template']` to your needs.
 	 *
-	 * @param string [$key] Optional message key. 
+	 * @param string [$key] Optional message key.
 	 * @param array [$options] Optional options.
 	 *              - type: Template type that will be rendered.
 	 *              - template: Name of the template that will be rendered.
@@ -42,7 +42,7 @@ class FlashMessage extends \lithium\template\Helper {
 	 *              - options: Additional options that will be passed to the renderer.
 	 * @return string Returns the rendered template.
 	 */
-	public function show($key = 'default', array $options = array()) {
+	public function show($key = 'flash_message', array $options = array()) {
 		$defaults = array(
 			'type' => 'element',
 			'template' => 'flash_message',

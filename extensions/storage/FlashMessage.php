@@ -9,6 +9,7 @@
 namespace li3_flash_message\extensions\storage;
 
 use lithium\core\Libraries;
+use lithium\util\String;
 
 /**
  * Class for setting, getting and clearing flash messages. Use this class inside your
@@ -44,8 +45,9 @@ class FlashMessage extends \lithium\core\StaticObject {
 	 *
 	 * @var array
 	 */
-	protected static $_config = array(
-		'session' => array('config' => 'default', 'key' => 'message')
+	protected static $_session = array(
+		'config' => 'default',
+		'base' => null
 	);
 
 	/**
@@ -68,12 +70,11 @@ class FlashMessage extends \lithium\core\StaticObject {
 	 */
 	public static function config(array $config = array()) {
 		if (!$config) {
-			return static::$_config + array('classes' => static::$_classes);
+			return array('session' => static::$_session) + array('classes' => static::$_classes);
 		}
 
 		foreach ($config as $key => $val) {
 			$key = "_{$key}";
-
 			if (isset(static::${$key})) {
 				static::${$key} = $val + static::${$key};
 			}
@@ -89,6 +90,10 @@ class FlashMessage extends \lithium\core\StaticObject {
 	 * @return object Returns the passed `$controller` instance.
 	 */
 	public static function bindTo($controller, array $options = array()) {
+		if (!method_exists($controller, 'applyFilter')) {
+			return $controller;
+		}
+
 		$controller->applyFilter('redirect', function($self, $params, $chain) use ($options) {
 			$options =& $params['options'];
 
@@ -111,17 +116,22 @@ class FlashMessage extends \lithium\core\StaticObject {
 	 * @param string $key Optional key to store multiple flash messages.
 	 * @return boolean True on successful write, false otherwise.
 	 */
-	public static function write($message, array $attrs = array(), $key = 'default') {
+	public static function write($message, array $attrs = array(), $key = 'flash_message') {
 		$session = static::$_classes['session'];
-		$base = static::$_config['session']['key'];
-		$key = ($base ? "{$base}." : '') . $key;
-		$name = static::$_config['session']['config'];
+		$key = static::_key($key);
+		$name = static::$_session['config'];
 
 		if (static::$_messages === null) {
 			$path = Libraries::get(true, 'path') . '/config/messages.php';
 			static::$_messages = file_exists($path) ? include $path : array();
 		}
- 		$message = isset(static::$_messages[$message]) ? static::$_messages[$message] : $message;
+
+		if (is_string($message) && isset(static::$_messages[$message])) {
+			$message = String::insert(static::$_messages[$message], $attrs);
+		} elseif (is_array($message)) {
+			$attrs = $message;
+			$message = String::insert(array_shift($attrs), $attrs);
+		}
 		return $session::write($key, compact('message', 'attrs'), compact('name'));
 	}
 
@@ -131,30 +141,46 @@ class FlashMessage extends \lithium\core\StaticObject {
 	 * @param string [$key] Optional key.
 	 * @return array The stored flash message.
 	 */
-	public static function read($key = 'default') {
+	public static function read($key = 'flash_message') {
 		$session = static::$_classes['session'];
-		$config = static::$_config['session'];
-		$name = $config['config'];
-		$base = $config['key'];
-		$key = ($base ? "{$base}." : '') . $key;
-		return $session::read($key, compact('name'));
+		$key = static::_key($key);
+		return $session::read($key, array('name' => static::$_session['config']));
 	}
 
 	/**
-	 * Clears all flash messages from the session.
+	 * Delete a flash messages from the session.
 	 *
-	 * @return void
+	 * @return boolean
 	 */
-	public static function clear($key = null) {
+	public static function clear($key = 'flash_message') {
 		$session = static::$_classes['session'];
-		$config = static::$_config['session'];
-		$base = $config['key'];
-		$key = ($base && $key ? "{$base}." : '') . $key;
+		$key = static::_key($key);
+		return $session::delete($key, array('name' => static::$_session['config']));
+	}
 
-		return (
-			$config['key'] ? $session::delete("{$config['key']}", compact('name')) : true &&
-			$session::delete($key, compact('name'))
+	/**
+	 * Reset the class.
+	 */
+	public static function reset() {
+		static::$_messages = null;
+		static::$_classes = array(
+			'session' => 'lithium\storage\Session'
 		);
+		static::$_session = array(
+			'config' => 'default',
+			'base' => null
+		);
+	}
+
+	/**
+	 * Helper for building the key
+	 *
+	 * @param string $key The key.
+	 * @return string The complete key.
+	 */
+	protected static function _key($key) {
+		$base = static::$_session['base'];
+		return ($base ? "{$base}." : '') . $key;
 	}
 }
 
