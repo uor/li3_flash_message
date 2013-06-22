@@ -126,11 +126,11 @@ class FlashMessage extends \lithium\core\StaticObject {
 			static::$_messages = file_exists($path) ? include $path : array();
 		}
 
-		if (is_string($message) && isset(static::$_messages[$message])) {
-			$message = String::insert(static::$_messages[$message], $attrs);
-		} elseif (is_array($message)) {
-			$attrs = $message;
-			$message = String::insert(array_shift($attrs), $attrs);
+		if (is_string($message)) {
+			if (isset(static::$_messages[$message])) {
+				$message = static::$_messages[$message];
+			}
+			$message = String::insert($message, $attrs);
 		}
 		return $session::write($key, compact('message', 'attrs'), compact('name'));
 	}

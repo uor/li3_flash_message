@@ -160,6 +160,32 @@ class FlashMessageTest extends \lithium\test\Unit {
 		$result = FlashMessage::read();
 		$this->assertNull($result);
 	}
+
+	public function testMessageWithParameters() {
+		FlashMessage::write('{:name}: the most rad php framework', array('name' => 'Lithium'));
+		$result = FlashMessage::read('flash_message');
+		$expected = array(
+			'message' => 'Lithium: the most rad php framework',
+			'attrs' => array('name' => 'Lithium')
+		);
+		$this->assertEqual($expected, $result);
+	}
+
+	public function testArrayOfStringAsMessage() {
+		$messages = array(
+			'Name can\'t be empty.',
+			'Email required',
+			'Phone is invalid.'
+		);
+		FlashMessage::write($messages);
+
+		$expected = array(
+			'message' => $messages,
+			'attrs' => array()
+		);
+		$result = FlashMessage::read('flash_message');
+		$this->assertEqual($expected, $result);
+	}
 }
 
 ?>
