@@ -8,8 +8,9 @@
 
 namespace li3_flash_message\tests\cases\extensions\storage;
 
-use li3_flash_message\extensions\storage\FlashMessage;
+use lithium\core\Libraries;
 use lithium\storage\Session;
+use li3_flash_message\extensions\storage\FlashMessage;
 
 class FlashMessageTest extends \lithium\test\Unit {
 
@@ -185,6 +186,53 @@ class FlashMessageTest extends \lithium\test\Unit {
 		);
 		$result = FlashMessage::read('flash_message');
 		$this->assertEqual($expected, $result);
+	}
+
+	public function testMessageTranslation() {
+		$testApp = Libraries::get(true, 'resources') . '/tmp/tests/test_app';
+		mkdir($testApp . '/config', 0777, true);
+
+		$body = <<<EOD
+<?php
+return array(
+	'hello' => 'Hello World.',
+	'advice' => 'Whatever advice you give, be short.',
+	'error' => 'To err is human, but for a real disaster you need a computer.'
+);
+?>
+EOD;
+		$filepath = $testApp . '/config/messages.php';
+		file_put_contents($filepath, $body);
+
+		Libraries::add('test_app', array('path' => $testApp));
+
+		FlashMessage::config(array('library' => 'test_app'));
+
+		$messages = array('hello', 'advice', 'error');
+		FlashMessage::write($messages);
+
+		$expected = array(
+			'message' => array(
+				'Hello World.',
+				'Whatever advice you give, be short.',
+				'To err is human, but for a real disaster you need a computer.'
+			),
+			'attrs' => array()
+		);
+		$result = FlashMessage::read('flash_message');
+		$this->assertEqual($expected, $result);
+
+		$message = 'hello';
+		FlashMessage::write($message);
+
+		$expected = array(
+			'message' => 'Hello World.',
+			'attrs' => array()
+		);
+		$result = FlashMessage::read('flash_message');
+		$this->assertEqual($expected, $result);
+
+		$this->_cleanUp();
 	}
 }
 
