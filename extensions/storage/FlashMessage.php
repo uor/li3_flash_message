@@ -51,6 +51,13 @@ class FlashMessage extends \lithium\core\StaticObject {
 	);
 
 	/**
+	 * The library containing the `messages.php` config file.
+	 *
+	 * @var array
+	 */
+	protected static $_library = true;
+
+	/**
 	 * Stores message keys.
 	 *
 	 * @var array
@@ -76,7 +83,7 @@ class FlashMessage extends \lithium\core\StaticObject {
 		foreach ($config as $key => $val) {
 			$key = "_{$key}";
 			if (isset(static::${$key})) {
-				static::${$key} = $val + static::${$key};
+				static::${$key} = is_array($val) ? $val + static::${$key} : $val;
 			}
 		}
 	}
@@ -111,27 +118,34 @@ class FlashMessage extends \lithium\core\StaticObject {
 	 * Writes a flash message.
 	 *
 	 * @todo Add closure support to messages
-	 * @param string $message Message that will be stored.
+	 * @param mixed $msg Message the message to be stored.
 	 * @param array $attrs Optional attributes that will be available in the view.
 	 * @param string $key Optional key to store multiple flash messages.
 	 * @return boolean True on successful write, false otherwise.
 	 */
-	public static function write($message, array $attrs = array(), $key = 'flash_message') {
+	public static function write($msg, array $attrs = array(), $key = 'flash_message') {
 		$session = static::$_classes['session'];
 		$key = static::_key($key);
 		$name = static::$_session['config'];
 
 		if (static::$_messages === null) {
-			$path = Libraries::get(true, 'path') . '/config/messages.php';
+			$path = Libraries::get(static::$_library, 'path') . '/config/messages.php';
 			static::$_messages = file_exists($path) ? include $path : array();
 		}
 
-		if (is_string($message)) {
-			if (isset(static::$_messages[$message])) {
-				$message = static::$_messages[$message];
+		$message = (array) $msg;
+
+		foreach ($message as $index => $value) {
+			if (isset(static::$_messages[$value])) {
+				$value = static::$_messages[$value];
 			}
-			$message = String::insert($message, $attrs);
+			$message[$index] = String::insert($value, $attrs);
 		}
+
+		if (is_string($msg)) {
+			$message = reset($message);
+		}
+
 		return $session::write($key, compact('message', 'attrs'), compact('name'));
 	}
 
@@ -162,6 +176,7 @@ class FlashMessage extends \lithium\core\StaticObject {
 	 * Reset the class.
 	 */
 	public static function reset() {
+		static::$_library = true;
 		static::$_messages = null;
 		static::$_classes = array(
 			'session' => 'lithium\storage\Session'
